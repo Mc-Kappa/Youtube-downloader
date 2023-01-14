@@ -3,16 +3,19 @@ from moviepy.editor import *
 from PyQt6.QtWidgets import QApplication, QPushButton, QLabel, QTextEdit, QMessageBox, QRadioButton, QMainWindow
 from PyQt6.QtCore import QCoreApplication
 
-def convert(nameToWrite, choose):
-    CurrentFileName = '{}.mp4'.format(nameToWrite)
-    FinalFileName = '{}.mp3'.format(nameToWrite)
-    videoclip = VideoFileClip(CurrentFileName)
+def convert(downloadedVideoName, nameToWrite, choose):
+    FinalFileName = f'{nameToWrite}.mp3'
+    videoclip = VideoFileClip(downloadedVideoName)
     audioclip = videoclip.audio
     QCoreApplication.processEvents()
     audioclip.write_audiofile(FinalFileName,bitrate=choose,verbose=False,logger=None)
     audioclip.close()
     videoclip.close()
-    os.remove(CurrentFileName)
+    os.remove(downloadedVideoName)
+
+def deleteSpecialSigns(str):
+    return str.replace("\\","").replace("/","").replace(":","").replace("*","").replace("?","").replace("<","").replace(">","").replace("\"","").replace("|","")
+
 
 class Window(QMainWindow):
     def __init__(self):
@@ -80,11 +83,15 @@ class Window(QMainWindow):
         for x in range (0,songCount):
             QCoreApplication.processEvents()
             ytObj = YouTube(array[x])
-            nameToWrite = ytObj.title.replace('"', '').replace('/', '-').replace('|',' ').replace(':', '_')
+            nameToWrite = deleteSpecialSigns(ytObj.title)
+            author = deleteSpecialSigns(ytObj.author)
+            if ("Topic" in author):
+                author = author.replace(" Topic", "")
+            fileName = author + " " + nameToWrite
             newFile = ytObj.streams.get_by_itag(18)
-            newFile.download(filename="{}.mp4".format(nameToWrite))
-            downloadedSongs.append(nameToWrite)
-            convert(nameToWrite, self.choose)
+            downloadedVideoName = newFile.download(filename=f"{str(fileName)}.mp4")
+            downloadedSongs.append(fileName)
+            convert(downloadedVideoName, fileName, self.choose)
             self.downloadingLabel(x+1,songCount)
         popupMessage = QMessageBox()
         popupMessage.setWindowTitle("Downloaded sucessful!")
