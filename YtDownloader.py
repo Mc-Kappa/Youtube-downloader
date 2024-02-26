@@ -78,21 +78,33 @@ class Window(QMainWindow):
         except:
             True
         songCount = len(array)
-        self.downloadingLabel(0,songCount)
-        
-        for x in range (0,songCount):
+        self.downloadingLabel(0,songCount)      
+        counter = 0 
+        while array:
+            fileName = ""
+            song_to_download = array.pop()
             QCoreApplication.processEvents()
-            ytObj = YouTube(array[x])
-            nameToWrite = deleteSpecialSigns(ytObj.title)
+            ytObj = YouTube(song_to_download)
+            '''
+            Once time, there was kind of problem with pytube, and there was errors during donwloading songs, so decided to change loop for try until you wouldn't download it. 
+            '''
+            try:
+                nameToWrite = deleteSpecialSigns(ytObj.title)
+            except:
+                array.append(song_to_download)
+                continue
             author = deleteSpecialSigns(ytObj.author)
             if ("Topic" in author):
                 author = author.replace(" Topic", "")
-            fileName = author + " " + nameToWrite
+
+            fileName = author + " - " + nameToWrite
             newFile = ytObj.streams.get_by_itag(18)
             downloadedVideoName = newFile.download(filename=f"{str(fileName)}.mp4")
             downloadedSongs.append(fileName)
             convert(downloadedVideoName, fileName, self.choose)
-            self.downloadingLabel(x+1,songCount)
+            counter+=1 
+            self.downloadingLabel(counter,songCount)
+
         popupMessage = QMessageBox()
         popupMessage.setWindowTitle("Downloaded sucessful!")
         temp = "Downloaded: \n"
